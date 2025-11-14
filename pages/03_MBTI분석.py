@@ -1,31 +1,41 @@
 # streamlit_app.py
 """
 Streamlit app: MBTI by Country (interactive Plotly bar chart)
-- Works on Streamlit Cloud (file should be named 'streamlit_app.py').
-- Select a country -> show MBTI distribution as a Plotly bar chart.
-- Chart styling: 1st place = red, others = blue -> fading gradient (lighter blues for lower ranks).
-- Includes a downloadable requirements.txt.
-
-Fixes vs previous version:
-- Robust MBTI column detection using canonical 16 MBTI types in order.
-- Handles missing/extra columns gracefully and shows clear warnings.
-- Safer color hex conversion (rounding & clamping) to avoid float/integer issues that could cause errors.
-- Improved hovertemplate and text display.
-- Better error messages for CSV loading issues.
+- 파일명: streamlit_app.py (Streamlit Cloud에서 자동으로 인식됩니다)
+- 사용법: 프로젝트 루트에 countriesMBTI_16types.csv 파일을 두거나, 앱에서 CSV를 업로드하세요.
+- 의존성: streamlit, pandas, plotly
 """
 
 import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
+import sys
 from pathlib import Path
-import io
+
+# 안전하게 plotly import 처리: 설치되어 있지 않다면 사용자에게 안내하고 중단
+try:
+    import plotly.graph_objects as go
+except Exception:
+    st.set_page_config(page_title='MBTI by Country', layout='wide')
+    st.title('🌍 MBTI Distribution by Country — Interactive Plotly Chart')
+    st.error(
+        "필수 패키지 'plotly'가 설치되어 있지 않아 앱을 실행할 수 없습니다.\n\n"
+        "해결 방법:\n"
+        "1) 프로젝트 루트에 다음 내용을 포함한 `requirements.txt` 파일을 추가하세요:\n\n"
+        "   streamlit==1.28.0\n"
+        "   pandas>=1.5.0\n"
+        "   plotly>=5.15.0\n\n"
+        "2) Streamlit Cloud에 배포한 경우 앱 페이지의 'Manage app' → 'Redeploy' 또는 'Restart'를 눌러 재배포하세요.\n"
+        "   (로컬) 터미널에서: pip install -r requirements.txt\n\n"
+        "설치 후 앱을 다시 열면 정상 동작합니다."
+    )
+    st.stop()
+
+import pandas as pd
 
 st.set_page_config(page_title='MBTI by Country', layout='wide')
-
 st.title('🌍 MBTI Distribution by Country — Interactive Plotly Chart')
 st.markdown('CSV 파일을 업로드하거나 프로젝트 루트에 `countriesMBTI_16types.csv` 파일을 넣어주세요.')
 
-# Canonical MBTI order (used to prefer consistent ordering if present)
+# Canonical MBTI order (preferential ordering if present in CSV)
 MBTI_ORDER = ['INFJ','ISFJ','INTP','ISFP','ENTP','INFP','ENTJ','ISTP','INTJ','ESFP','ESTJ','ENFP','ESTP','ISTJ','ENFJ','ESFJ']
 
 # Load CSV (uploader or local file if present)
@@ -160,14 +170,14 @@ with col1:
 with col2:
     st.plotly_chart(fig, use_container_width=True)
 
-# requirements
-requirements = """streamlit
-pandas
-plotly
+# requirements download
+requirements = """streamlit==1.28.0
+pandas>=1.5.0
+plotly>=5.15.0
 """
 st.markdown('---')
 st.subheader('requirements.txt')
 st.code(requirements)
 st.download_button('requirements.txt 다운로드', data=requirements, file_name='requirements.txt', mime='text/plain')
 
-st.markdown('\n---\n문제가 계속되면 발생한 에러 메시지를 알려주세요. 제가 더 자세히 고쳐드릴게요.')
+st.markdown('\n---\n문제가 계속되면 발생한 에러 메시지를 그대로 알려주세요. 바로 도와드릴게요.')
