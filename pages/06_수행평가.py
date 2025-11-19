@@ -1,7 +1,4 @@
-# Streamlit app for visualizing Seoul COVID-19 Vaccination Status
-# This version does NOT require you to add the CSV to the repo — it will try server paths first
-# and then fall back to an upload widget so visitors can run the app without repo changes.
-
+# app.py — Streamlit app for Seoul COVID-19 Vaccination Status (Uploader-friendly)
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -10,16 +7,12 @@ st.set_page_config(layout="wide", page_title="Seoul COVID-19 Vaccination Status"
 st.title("Seoul Metropolitan City — COVID-19 Vaccination Status (Uploader-friendly)")
 st.write("앱이 자동으로 서버 경로에서 파일을 찾지 못하면, 아래 업로더로 파일을 올려 실행할 수 있습니다.")
 
-# If the app is running in the same session where the user previously uploaded
-# or we have access to a sandbox path, we attempt those paths first.
-# The uploaded file (from your earlier session) exists at this path in this environment:
-DEFAULT_LOCAL_PATH = "/mnt/data/Seoul Metropolitan City_COVID-19 Vaccination Status.csv"
-
 PREFERRED_PATHS = [
-    DEFAULT_LOCAL_PATH,
+    "/mnt/data/Seoul Metropolitan City_COVID-19 Vaccination Status.csv",
     "./Seoul Metropolitan City_COVID-19 Vaccination Status.csv",
     "./data/Seoul Metropolitan City_COVID-19 Vaccination Status.csv",
     "./seoul_vaccination_status.csv",
+    "./data/seoul_vaccination_status.csv"
 ]
 
 @st.cache_data
@@ -36,15 +29,12 @@ def try_read_csv_from_paths(paths):
             continue
     return None, None, None
 
-# 1) Try paths
 df, used_path, used_enc = try_read_csv_from_paths(PREFERRED_PATHS)
 
-# 2) If not found, show uploader
 if df is None:
     st.warning("CSV 파일을 자동으로 찾지 못했습니다. 아래에서 파일을 업로드하세요 (한 번 업로드하면 앱이 바로 동작합니다).")
     uploaded = st.file_uploader("CSV 파일 업로드 (예: Seoul Metropolitan City_COVID-19 Vaccination Status.csv)", type=["csv"])
     if uploaded is not None:
-        # Try reading uploaded file with pandas; try common encodings
         success = False
         for enc in [None, 'cp949', 'euc-kr', 'utf-8', 'latin1']:
             try:
@@ -76,11 +66,9 @@ st.write(df.dtypes.to_frame('dtype'))
 
 # 자동으로 '차수' 관련 컬럼 탐지
 dose_cols = [c for c in df.columns if any(x in c for x in ['1차','2차','3차','차수','접종','당일'])]
-# 영어 표기 탐지
 dose_cols += [c for c in df.columns if any(x in c.lower() for x in ['1st','2nd','3rd','dose']) and c not in dose_cols]
 dose_cols = list(dict.fromkeys(dose_cols))
 
-# 집계
 dose_totals = {}
 if dose_cols:
     for c in dose_cols:
@@ -91,9 +79,7 @@ else:
     for c in numeric_cols[:3]:
         dose_totals[c] = float(df[c].sum())
 
-import pandas as pd
 dose_df = pd.DataFrame.from_dict(dose_totals, orient='index', columns=['total']).reset_index().rename(columns={'index':'dose'})
-# 안전장치: 총합이 0이면 1로 대체(비율 계산 시)
 total_sum = dose_df['total'].sum() if dose_df['total'].sum() else 1
 dose_df['proportion'] = dose_df['total'] / total_sum
 dose_df = dose_df.sort_values('total', ascending=False).reset_index(drop=True)
