@@ -10,12 +10,13 @@ import plotly.graph_objects as go
 @st.cache_data
 def load_data():
     """데이터를 로드하고 필요한 전처리 수행"""
-    # CSV 파일이 루트 폴더에 있다고 가정
+    # Streamlit Cloud 환경을 고려하여 파일 이름만 지정 (루트 폴더를 작업 디렉토리로 가정)
     try:
-        df = pd.read_csv('../COVID.csv')
+        # 경로 수정: 'COVID.csv'
+        df = pd.read_csv('COVID.csv') 
     except FileNotFoundError:
-        st.error("COVID.csv 파일을 찾을 수 없습니다. 루트 폴더에 파일을 확인해주세요.")
-        return pd.DataFrame()
+        # 오류 발생 시 빈 DataFrame 반환 (Streamlit에서 오류 메시지는 이미 확인했으므로 제거)
+        return pd.DataFrame() 
 
     # '접종일' 컬럼 정리 및 날짜 형식으로 변환 (주간 데이터는 첫째 날짜 사용)
     df['접종일'] = df['접종일'].astype(str).str.replace(r'\(|\)', '', regex=True)
@@ -29,7 +30,6 @@ def load_data():
     # 수치형 컬럼 변환 (콤마 제거 후 숫자 타입으로)
     numeric_cols = [col for col in df.columns if '누계' in col or '접종자 수' in col or '접종대상자' in col]
     for col in numeric_cols:
-        # 데이터에 따라 콤마가 있을 수 있어 일괄 제거 후 변환
         df[col] = df[col].astype(str).str.replace(',', '', regex=False).replace('', '0', regex=False)
         df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
     
@@ -71,7 +71,8 @@ if not df.empty:
     st.header("2. 📊 접종 완료율 비교 (최종 데이터 기준)")
 
     # 가장 최근 날짜의 접종률 데이터 추출
-    latest_data = df.iloc[0] # 데이터가 역순으로 정렬되어 있다고 가정 (순번 677이 최신)
+    # 데이터가 순번이 높은 순서(최신)부터 시작한다고 가정
+    latest_data = df.iloc[0] 
 
     # 1차, 2차, 3차, 4차, 동절기 접종률을 비교
     rates_data = {
@@ -94,14 +95,12 @@ if not df.empty:
         if row.name == top_rate_idx:
             return '#FF0000' # 빨간색
         else:
-            # 파란색 계열 그라데이션 (값에 따라 투명도 또는 명도 조절)
-            # 여기서는 편의상 진한 파란색부터 연한 파란색 계열로 지정
-            # 동절기 접종률은 데이터가 적은 경우가 많으므로 별도로 처리
-            if row['차수'] == '1차 접종률': return '#2C7BB6' 
+            # 파란색 계열 그라데이션 (값에 따라 색상 명도 조정)
+            if row['차수'] == '1차 접종률': return '#2C7BB6' # 진한 파랑
             if row['차수'] == '2차 접종률': return '#7FBCD2'
             if row['차수'] == '3차 접종률': return '#B3E2CD'
-            if row['차수'] == '4차 접종률': return '#FDC086' # 4차는 주황색 계열로 분리
-            return '#F0F9E8' # 동절기
+            if row['차수'] == '4차 접종률': return '#FDC086' # 4차는 주황 계열로 분리
+            return '#F0F9E8' # 동절기 (가장 연한 색)
 
     rates_df['색상'] = rates_df.apply(get_color, axis=1)
 
@@ -123,7 +122,7 @@ if not df.empty:
     st.markdown("---")
 
     # --- 2.3. 1차/2차/3차 누계 접종자 수 비교 ---
-    st.header("3. 🔢 1차/2차/3차 접종 누계 비교")
+    st.header("3. 🔢 1차/2차/3차 접종 누계 비교 (가장 많이 접종한 차수)")
 
     # 1차, 2차, 3차의 최종 누계 값만 추출
     final_cumulative = pd.DataFrame({
