@@ -71,3 +71,11 @@ if df is None:
 st.success(f"데이터 로드 성공 — 소스: {used_path} (encoding={used_enc})")
 
 # 이후 df를 기존 코드대로 사용하면 됩니다.
+# --- 강제: 절대 경로에서 바로 읽기 (업로더 생략)
+import pandas as pd
+csv_path = "/mnt/data/Seoul Metropolitan City_COVID-19 Vaccination Status.csv"
+try:
+    df = pd.read_csv(csv_path, encoding="cp949")   # cp949로 먼저 시도
+except Exception:
+    df = pd.read_csv(csv_path, encoding="utf-8")   # 실패하면 utf-8로 재시도
+# 이후 기존 로직(데이터 처리/시각화) 그대로 사용
