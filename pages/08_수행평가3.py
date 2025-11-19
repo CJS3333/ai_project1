@@ -46,12 +46,12 @@ df = load_data()
 
 if not df.empty:
     st.set_page_config(layout="wide")
-    st.title("💉 COVID-19 백신 접종 현황 분석 (AI 수행평가)")
+    st.title("💉 COVID-19 백신 접종 현황 분석 ")
 
     st.markdown("---")
 
     # --- 2.1. Plotly 시계열 그래프 (1차 접종률) ---
-    st.header("1. 📉 1차 접종률 추이 (Plotly 인터랙티브 그래프)")
+    st.header("1. 📉 1차 접종률 추이 (Plotly 그래프)")
     
     fig_line = px.line(
         df, 
